@@ -14,15 +14,15 @@
 namespace vulkan {
 
 	struct vulkan_texture {
-		VkSampler sampler;
+		VkSampler sampler = VK_NULL_HANDLE;
 
-		VkImage image;
-		VkImageLayout imageLayout;
+		VkImage image = VK_NULL_HANDLE;
+		VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		VkMemoryAllocateInfo memory_allocation_info;
-		VkDeviceMemory device_memory;
-		VkImageView view;
-		uint32_t width, height;
+		VkDeviceMemory device_memory = VK_NULL_HANDLE;
+		VkImageView view = VK_NULL_HANDLE;
+		uint32_t width = 0, height = 0;
 	};
 
 	struct vulkan_buffer {
@@ -262,6 +262,58 @@ namespace vulkan {
 
 				_swapchain_command_buffers.push_back(command_buffer);
 			}
+		}
+
+		VkShaderModule create_shader_module(const char * filename) {
+
+			auto load_code = [](const char * filename, size_t& psize) -> void * {
+				long int size;
+				size_t retval;
+				void * shader_code;
+
+				FILE *fp = fopen(filename, "rb");
+				if (!fp)
+					return NULL;
+
+				fseek(fp, 0L, SEEK_END);
+				size = ftell(fp);
+
+				fseek(fp, 0L, SEEK_SET);
+
+				shader_code = malloc(size);
+				retval = fread(shader_code, size, 1, fp);
+				assert(retval == 1);
+
+				psize = size;
+
+				fclose(fp);
+				return shader_code;
+			};
+
+			VkShaderModule vert_shader_module;
+			{
+				size_t size;
+
+				void * vert_shader_code = load_code(filename, size);
+
+				VkShaderModuleCreateInfo module_create_info;
+				VkResult err;
+
+				module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+				module_create_info.pNext = NULL;
+
+				module_create_info.codeSize = size;
+				module_create_info.pCode = (uint32_t *)vert_shader_code;
+				module_create_info.flags = 0;
+
+				err = vkCreateShaderModule(_vulkan_device, &module_create_info, NULL, &vert_shader_module);
+				assert(!err);
+
+				free(vert_shader_code);
+
+			}
+
+			return vert_shader_module;
 		}
 
 		void demo_setup_cube();

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include <array>
 #include <tuple>
 #include <assert.h>
 
@@ -122,7 +123,7 @@ namespace vulkan {
 			VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
 			NULL,
 			srcAccessMask,
-			 0,
+			0,
 			old_image_layout,
 			new_image_layout,
 			0,
@@ -634,8 +635,9 @@ namespace vulkan {
 		err = fpGetPhysicalDeviceSurfaceFormatsKHR(_vulkan_physical_device, _vulkan_surface, &surface_format_count, NULL);
 		assert(!err);
 
-		auto surface_formats = (VkSurfaceFormatKHR *)malloc(surface_format_count * sizeof(VkSurfaceFormatKHR));
-		err = fpGetPhysicalDeviceSurfaceFormatsKHR(_vulkan_physical_device, _vulkan_surface, &surface_format_count, surface_formats);
+		//auto surface_formats = (VkSurfaceFormatKHR *)malloc(surface_format_count * sizeof(VkSurfaceFormatKHR));
+		std::vector<VkSurfaceFormatKHR> surface_formats(surface_format_count);
+		err = fpGetPhysicalDeviceSurfaceFormatsKHR(_vulkan_physical_device, _vulkan_surface, &surface_format_count, surface_formats.data());
 
 		assert(!err);
 
@@ -702,7 +704,7 @@ typedef struct VkCommandBufferAllocateInfo {
 		create_surface_depth_image();
 
 		_demo_texture = create_texture("test.png");
-
+		
 		demo_setup_cube();
 
 		demo_build_render_pass();
@@ -1031,6 +1033,28 @@ typedef struct VkImageCopy {
 		vulkan_texture return_texture;
 
 		std::shared_ptr<uint8_t> raw_image = nullptr;
+		/*
+		std::array<uint8_t, 16> raw_image;
+		raw_image[0] = 255;
+		raw_image[1] = 0;
+		raw_image[2] = 255;
+		raw_image[3] = 255;
+
+		raw_image[4] = 0;
+		raw_image[5] = 255;
+		raw_image[6] = 255;
+		raw_image[7] = 255;
+
+		raw_image[8] = 0;
+		raw_image[9] = 0;
+		raw_image[10] = 255;
+		raw_image[11] = 255;
+
+		raw_image[12] = 255;
+		raw_image[13] = 255;
+		raw_image[14] = 255;
+		raw_image[15] = 255;
+		*/
 		try {
 			raw_image = load_image::png(filename, return_texture.width, return_texture.height);
 		} catch (std::exception& e) {
@@ -1064,8 +1088,20 @@ typedef struct VkImageCopy {
 			*/
 
 			// rough n ready
-			uint32_t size = return_texture.width * return_texture.height * 4;
-			memcpy_s(data, size, raw_image.get(), size);
+			//uint32_t size = return_texture.width * return_texture.height * 4;
+			//memcpy_s(data, size, raw_image.get(), size);
+			//memcpy(data, raw_image.data(), size);
+			uint8_t * img = (uint8_t *)data;
+
+			for (uint32_t i = 0; i < return_texture.height; ++i) {
+				memcpy(img, raw_image.get() + i * return_texture.width * 4, return_texture.width * 4);
+				img = img + layout.rowPitch;
+			}
+			img = (uint8_t *)data;
+			for (int i = 0; i < 16; ++i) {
+				std::cout << i << ": " << (int)img[i] << std::endl;
+			}
+
 
 			vkUnmapMemory(_vulkan_device, return_texture.device_memory);
 		}
@@ -1602,11 +1638,9 @@ typedef struct VkImageCopy {
 		memset(&vp, 0, sizeof(vp));
 		vp.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		vp.viewportCount = 1;
-		dynamicStateEnables[dynamicState.dynamicStateCount++] =
-			VK_DYNAMIC_STATE_VIEWPORT;
+		dynamicStateEnables[dynamicState.dynamicStateCount++] = VK_DYNAMIC_STATE_VIEWPORT;
 		vp.scissorCount = 1;
-		dynamicStateEnables[dynamicState.dynamicStateCount++] =
-			VK_DYNAMIC_STATE_SCISSOR;
+		dynamicStateEnables[dynamicState.dynamicStateCount++] = VK_DYNAMIC_STATE_SCISSOR;
 
 		memset(&ds, 0, sizeof(ds));
 		ds.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1633,52 +1667,7 @@ typedef struct VkImageCopy {
 		shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
 
-		auto load_code = [](const char * filename, size_t& psize) -> void * {
-			long int size;
-			size_t retval;
-			void * shader_code;
-
-			FILE *fp = fopen(filename, "rb");
-			if (!fp)
-				return NULL;
-
-			fseek(fp, 0L, SEEK_END);
-			size = ftell(fp);
-
-			fseek(fp, 0L, SEEK_SET);
-
-			shader_code = malloc(size);
-			retval = fread(shader_code, size, 1, fp);
-			assert(retval == 1);
-
-			psize = size;
-
-			fclose(fp);
-			return shader_code;
-		};
-
-		VkShaderModule vert_shader_module;
-		{
-			size_t size;
-
-			void * vert_shader_code = load_code("cube-vert.spv", size);
-
-			VkShaderModuleCreateInfo module_create_info;
-			VkResult err;
-
-			module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			module_create_info.pNext = NULL;
-
-			module_create_info.codeSize = size;
-			module_create_info.pCode = (uint32_t *)vert_shader_code;
-			module_create_info.flags = 0;
-
-			err = vkCreateShaderModule(_vulkan_device, &module_create_info, NULL, &vert_shader_module);
-			assert(!err);
-
-			free(vert_shader_code);
-			 
-		}
+		auto vert_shader_module = create_shader_module("cube-vert.spv");
 
 		shaderStages[0].module = vert_shader_module;
 		shaderStages[0].pName = "main";
@@ -1686,28 +1675,7 @@ typedef struct VkImageCopy {
 		shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		VkShaderModule frag_shader_module;
-		{
-			size_t size;
-
-			void * frag_shader_code = load_code("cube-frag.spv", size);
-
-			VkShaderModuleCreateInfo module_create_info;
-			VkResult err;
-
-			module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			module_create_info.pNext = NULL;
-
-			module_create_info.codeSize = size;
-			module_create_info.pCode = (uint32_t *)frag_shader_code;
-			module_create_info.flags = 0;
-
-			err = vkCreateShaderModule(_vulkan_device, &module_create_info, NULL, &frag_shader_module);
-			assert(!err);
-
-			free(frag_shader_code);
-
-		}
+		VkShaderModule frag_shader_module = create_shader_module("cube-frag.spv");
 
 		shaderStages[1].module = frag_shader_module;
 		shaderStages[1].pName = "main";
@@ -1744,21 +1712,14 @@ typedef struct VkImageCopy {
 	}
 
 	void wrapper::demo_perform_first_render(uint32_t swapchain_id) {
-		
-		/*
-		const VkClearValue clear_values[2] = {
-			[0] = { .color.float32 = { 0.2f, 0.2f, 0.2f, 0.2f } },
-			[1] = { .depthStencil = { 1.0f, 0 } },
-		};
-		*/
-
 		VkClearValue clear_values[2];
 		clear_values[0].color.float32[0] = 0.2f;
 		clear_values[0].color.float32[1] = 0.2f;
 		clear_values[0].color.float32[2] = 0.2f;
 		clear_values[0].color.float32[3] = 0.2f;
-		clear_values[1].depthStencil = { 1.0f, 0 };
-		/*
+		clear_values[1].depthStencil = { 1.0f, 0 }; // depth, stencil value
+		
+/*
 		const VkRenderPassBeginInfo rp_begin = {
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 			.pNext = NULL,
@@ -1822,12 +1783,13 @@ typedef struct VkImageCopy {
 			NULL,
 			0,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			 VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_QUEUE_FAMILY_IGNORED,
 			VK_QUEUE_FAMILY_IGNORED,
 			_swapchain_images[swapchain_id],
-			{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } };
+			{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+		};
 
 
 		vkCmdPipelineBarrier(_swapchain_command_buffers[swapchain_id], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &image_memory_barrier);
@@ -1872,7 +1834,7 @@ typedef struct VkImageCopy {
 		VkImageMemoryBarrier pre_present_barrier = {
 			VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
 			NULL,
-			 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_ACCESS_MEMORY_READ_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
@@ -1888,13 +1850,13 @@ typedef struct VkImageCopy {
 	}
 
 	void wrapper::demo_tick() {
-		vkDeviceWaitIdle(_vulkan_device);
+		//vkDeviceWaitIdle(_vulkan_device);
 		demo_update();
 
 		demo_draw();
 
 		// Wait for work to finish before updating MVP.
-		vkDeviceWaitIdle(_vulkan_device);
+		//vkDeviceWaitIdle(_vulkan_device);
 
 		_tick++;
 		//if (demo->frameCount != INT_MAX && demo->curFrame == demo->frameCount) {
@@ -1912,13 +1874,14 @@ typedef struct VkImageCopy {
 		model = _model;
 		_model = glm::rotate(model, 0.5f, { 0.0f, 1.0f, 0.0f });
 		MVP = _VP * _model;
-
+		
 		err = vkMapMemory(_vulkan_device, _cube_buffer.device_memory, 0, _cube_buffer.memory_allocation_info.allocationSize, 0, (void **)&pData);
 		assert(!err);
 
 		memcpy(pData, (const void *)&MVP[0][0], matrixSize);
 
 		vkUnmapMemory(_vulkan_device, _cube_buffer.device_memory);
+		
 	}
 
 	void wrapper::demo_draw() {
