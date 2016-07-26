@@ -1888,13 +1888,13 @@ typedef struct VkImageCopy {
 	}
 
 	void wrapper::demo_tick() {
-		vkDeviceWaitIdle(_vulkan_device);
+		//vkDeviceWaitIdle(_vulkan_device);
 		demo_update();
 
 		demo_draw();
 
 		// Wait for work to finish before updating MVP.
-		vkDeviceWaitIdle(_vulkan_device);
+		//vkDeviceWaitIdle(_vulkan_device);
 
 		_tick++;
 		//if (demo->frameCount != INT_MAX && demo->curFrame == demo->frameCount) {
