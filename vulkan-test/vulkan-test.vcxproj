@@ -101,14 +101,18 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>F:\code\jon-player\libazure\include\azure;F:\code\libpng-1.6.21;F:\code\VulkanSDK\1.0.21.0\Include;F:\code\jon-player\libscarlet\thirdparty\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\jon-player\libazure\include\azure;F:\code\libpng-1.6.21;..\..\VulkanSDK\1.0.21.1\Include;..\..\jon-player\libscarlet\thirdparty\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\code\libpng-1.6.21\projects\vstudio\x64\Debug;F:\code\VulkanSDK\1.0.21.0\Bin;F:\code\jon-player\libscarlet\thirdparty\lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>F:\code\libpng-1.6.21\projects\vstudio\x64\Debug;..\..\VulkanSDK\1.0.21.1\Bin;..\..\jon-player\libscarlet\thirdparty\lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;vulkan-1.lib;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>"../tools/glslangValidator.exe" -s -V -o "$(OutDir)cube-vert.spv" ../shaders/cube.vert
+"../tools/glslangValidator.exe" -s -V -o "$(OutDir)cube-frag.spv" ../shaders/cube.frag</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -153,6 +157,12 @@
     <ClCompile Include="..\src\pngReader.cpp" />
     <ClCompile Include="..\src\vulkan_wrapper.cpp" />
     <ClCompile Include="vulkan-test.cpp" />
+    <ClCompile Include="vulkan_pipeline.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\shaders\cube.frag" />
+    <None Include="..\shaders\cube.vert" />
+    <None Include="vulkan_pipeline.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
