@@ -101,12 +101,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\jon-player\libazure\include\azure;F:\code\libpng-1.6.21;..\..\VulkanSDK\1.0.21.1\Include;..\..\jon-player\libscarlet\thirdparty\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\jon-player\libazure\include\azure;F:\code\libpng-1.6.21;..\..\VulkanSDK\1.0.21.0\Include;..\..\VulkanSDK\1.0.21.1\Include;..\..\jon-player\libscarlet\thirdparty\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\code\libpng-1.6.21\projects\vstudio\x64\Debug;..\..\VulkanSDK\1.0.21.1\Bin;..\..\jon-player\libscarlet\thirdparty\lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>F:\code\libpng-1.6.21\projects\vstudio\x64\Debug;..\..\VulkanSDK\1.0.21.0\Bin;..\..\VulkanSDK\1.0.21.1\Bin;..\..\jon-player\libscarlet\thirdparty\lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;vulkan-1.lib;libpng16.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
